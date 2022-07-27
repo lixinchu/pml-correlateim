@@ -7,6 +7,7 @@ import skimage.io
 import skimage.transform
 
 from correlateim._version import __version__
+# from _version import __version__
 
 
 def imread(filename):

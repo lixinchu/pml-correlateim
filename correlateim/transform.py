@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.ndimage as ndi
 import skimage
-from skimage.transform import AffineTransform
+from skimage.transform import AffineTransform, PiecewiseAffineTransform
 
 
 def apply_transform(image, transformation, inverse=True, multichannel=True):
@@ -47,6 +47,10 @@ def apply_transform(image, transformation, inverse=True, multichannel=True):
     return warped_img
 
 
+# note: changed to AffineTransform from PiecewiseAffineTransform due to 
+# AttributeError: 'PiecewiseAffineTransform' object has no attribute 'params'
+# in transform.py, line 71 in calculate_transform
+# def calculate_transform(src, dst, model=PiecewiseAffineTransform()):
 def calculate_transform(src, dst, model=AffineTransform()):
     """Calculate transformation matrix from matched coordinate pairs.
 

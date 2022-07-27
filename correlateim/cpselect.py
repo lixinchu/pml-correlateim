@@ -17,6 +17,7 @@ from matplotlib.figure import Figure
 import skimage.color
 import skimage.transform
 
+# from _version import __version__
 from correlateim._version import __version__
 
 
@@ -154,7 +155,7 @@ class _MainWindow(QMainWindow):
 
     def pickmodechange(self):
 
-        if self.wp.canvas.toolbar._active in ["", None]:
+        if self.wp.canvas.toolbar.mode in ["", None]:
             if self.wp.canvas.pickmode == True:
                 self.wp.canvas.pickMode_changed = True
                 self.wp.canvas.pickmode = False
@@ -164,13 +165,13 @@ class _MainWindow(QMainWindow):
             else:
                 self.wp.canvas.pickMode_changed = True
                 self.wp.canvas.pickmode = True
-                self.wp.canvas.toolbar._active = ""
+                self.wp.canvas.toolbar.mode = ""
                 self.statusBar().showMessage(
                     "Pick Mode activate. Select Control Points."
                 )
         else:
             self.statusBar().showMessage(
-                f"Please, first deactivate the selected navigation tool {self.wp.canvas.toolbar._active}",
+                f"Please, first deactivate the selected navigation tool {self.wp.canvas.toolbar.mode}",
                 3000,
             )
 
@@ -193,7 +194,7 @@ class _MainWindow(QMainWindow):
 
     def updateGUI(self):
 
-        if self.wp.canvas.toolbar._active not in ["", None]:
+        if self.wp.canvas.toolbar.mode not in ["", None]:
             self.wp.canvas.pickmode = False
             self.wp.canvas.pickMode_changed = True
 
