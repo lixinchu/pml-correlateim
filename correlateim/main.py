@@ -1,6 +1,11 @@
 import os
 
 import click
+
+# QT imports
+# from PyQt5.QtWidgets import QApplication, QWidget, QLabel
+# from PyQt5.QtGui import QIcon, QPixmapfrom
+
 import matplotlib.pyplot as plt
 import numpy as np
 import skimage.color
@@ -9,7 +14,7 @@ import skimage.transform
 from correlateim import imageproc
 from correlateim import transform
 import correlateim.cpselect
-from correlateim.io import save_text
+from correlateim.io import save_json, save_text
 
 
 def _transform_images(transformation, image_filename_1, image_filename_2):
@@ -68,7 +73,9 @@ def _align_images(transformation, image_filename_1, image_filename_2):
     return result
 
 
-def correlate_images(image_filename_1, image_filename_2, output_filename):
+# def correlate_images(image_filename_1, image_filename_2, output_filename):
+def correlate_images(image_filename_1, output_filename):
+
     """Correlate two image files by interactively selecting control points.
 
     Parameters
@@ -93,25 +100,34 @@ def correlate_images(image_filename_1, image_filename_2, output_filename):
     (3) The affine transformation matrix, saved as .npy (read with numpy.load())
     """
     # User select matched control points
-    matched_points_dict = correlateim.cpselect.cpselect_read_files(
-        image_filename_1, image_filename_2)
+    # matched_points_dict = correlateim.cpselect.cpselect_read_files(
+    #     image_filename_1, image_filename_2)
+    matched_points_dict = correlateim.cpselect.cpselect_read_files(image_filename_1)
     if matched_points_dict == []:
         print('No control points selected, exiting.')
         return
     print(matched_points_dict)
+
     # Calculate and apply affine transformation
-    src, dst = transform.point_coords(matched_points_dict)
-    transformation = transform.calculate_transform(src, dst)
-    result = _align_images(transformation, image_filename_1, image_filename_2)
+    # src, dst = transform.point_coords(matched_points_dict)
+    # transformation = transform.calculate_transform(src, dst)
+    # result = _align_images(transformation, image_filename_1, image_filename_2)
+
     # Finish and tidy up
-    save_text(image_filename_1, image_filename_2, output_filename,
-              transformation, matched_points_dict)  # saves text summary
-    plt.imsave(output_filename, result)
-    print('Saved image overlay result to: '
-          '{}'.format(os.path.abspath(output_filename)))
-    plt.imshow(result)
-    plt.show()
-    return result
+    # save_text(image_filename_1, image_filename_2, output_filename,
+    #           transformation, matched_points_dict)  # saves text summary
+    if output_filename is not None:
+        save_json(output_filename, matched_points_dict) # saves JSON of selected landmarks
+        print('Saved point coordinates to: {}'.format(output_filename))
+    # plt.imsave(output_filename, result)
+    # print('Saved image overlay result to: '
+    #       '{}'.format(os.path.abspath(output_filename)))
+
+    # plt.imshow(result)
+    # plt.show()
+    # return result
+    print("Done!")
+    return
 
 
 def correlate_from_file(transformation_filename,
@@ -192,9 +208,10 @@ def main_from_file(transformation_filename, image_filename_1, image_filename_2,
 
 @click.command()
 @click.argument('image_filename_1')
-@click.argument('image_filename_2')
-@click.argument('output_filename')
-def main(image_filename_1, image_filename_2, output_filename):
+# @click.argument('image_filename_2')
+@click.argument('output_filename', required=False)
+def main(image_filename_1, output_filename=None):
+# def main(image_filename_1, image_filename_2, output_filename):
     """Correlate two images using matched control points.
 
     Parameters
@@ -218,9 +235,11 @@ def main(image_filename_1, image_filename_2, output_filename):
     (2) Text file with control points and matrix transform, saved as .txt
     (3) The affine transformation matrix, saved as .npy (read with numpy.load())
     """
-    result = correlate_images(image_filename_1,
-                              image_filename_2,
-                              output_filename)
+    # result = correlate_images(image_filename_1,
+    #                           image_filename_2,
+    #                           output_filename)
+
+    result = correlate_images(image_filename_1, output_filename)
     return result
 
 

@@ -21,7 +21,9 @@ import skimage.transform
 from correlateim._version import __version__
 
 
-def cpselect_read_files(img_path1, img_path2):
+# def cpselect_read_files(img_path1, img_path2):
+def cpselect_read_files(img_path1):
+
     """
     Tool for selection a individual number of control points in any two images.
 
@@ -32,34 +34,40 @@ def cpselect_read_files(img_path1, img_path2):
         (ID, x image 1, y image 1, x image 2, y image 2)
     """
     image_1 = skimage.color.gray2rgb(plt.imread(img_path1))
-    image_2 = skimage.color.gray2rgb(plt.imread(img_path2))
-    image_1 = skimage.transform.resize(image_1, image_2.shape)
+    # image_2 = skimage.color.gray2rgb(plt.imread(img_path2))
+    # image_1 = skimage.transform.resize(image_1, image_2.shape)
 
-    dictlist = cpselect(image_1, image_2)
+    #list of control points
+    # dictlist = cpselect(image_1, image_2)
+    dictlist = cpselect(image_1)
 
     return dictlist
 
-
-def cpselect(image_1, image_2):
-    app, cps = create_window(image_1, image_2)
-    cps.raise_()
-    app.exec_()
+# def cpselect(image_1, image_2):
+def cpselect(image_1):
+    # app, cps = create_window(image_1, image_2)
+    app, cps = create_window(image_1)
+    cps.raise_() # widget is raised visually in front of any overlapping widgets
+    app.exec_() # start event handling
 
     dictlist = []
+    # populate dictlist with cps
     for cp in cps.wp.canvas.CPlist:
         dictlist.append(cp.getdict)
 
     return dictlist
 
 
-def create_window(image_1, image_2):
-    global img1
-    global img2
-    img1 = image_1
-    img2 = image_2
+# def create_window(image_1, image_2):
+def create_window(image_1):
 
-    app = QApplication(sys.argv)
-    window = _MainWindow()
+    global img1
+    # global img2
+    img1 = image_1
+    # img2 = image_2
+
+    app = QApplication(sys.argv) # QT GUI application instance
+    window = _MainWindow() # instance of main application window
     return app, window
 
 
@@ -72,9 +80,9 @@ class _MainWindow(QMainWindow):
         self.createWindow()
         self.createConn()
 
-        self.showMaximized()
+        self.showMaximized() # show window maximized
         self.show()
-        self.wp.canvas.fig.subplots_adjust(left=0.01, bottom=0.01, right=0.99, top=0.99)
+        self.wp.canvas.fig.subplots_adjust(left=0.01, bottom=0.01, right=0.99, top=0.99) # adjusting subplot parameters
 
         q1 = QTimer(self)
         q1.setSingleShot(False)
@@ -91,12 +99,12 @@ class _MainWindow(QMainWindow):
 
         self.setCentralWidget(widget)
 
-        hlay = QHBoxLayout(widget)
-        vlay = QVBoxLayout()
+        hlay = QHBoxLayout(widget) # organizes widgets horizontally in a window
+        vlay = QVBoxLayout() # organizes widgets vertically in a window
         vlay2 = QVBoxLayout()
         vlay2.setSpacing(20)
         hlay_buttons = QHBoxLayout()
-
+        
         hlay.addLayout(vlay)
         hlay.addLayout(vlay2)
 
@@ -108,6 +116,7 @@ class _MainWindow(QMainWindow):
         self.help.setMaximumWidth(400)
         self.help.setMinimumHeight(540)
 
+        # right side bar description
         help_header = '<!DOCTYPE html><html lang="de" id="main"><head><meta charset="UTF-8"><title>Description of cpselect for Python</title><style>td,th{font-size:14px;}p{font-size: 14px;}</style></head>'
         help_body = '<body><h1>Description of cpselect for Python&emsp;</h1><h2>Navigation Toolbar</h2><img src="{}" alt="navbuttons"><br/><table cellspacing="20px"><tr><th valign="middle" height="20px">Tool</th><th valign="middle" height="20px">how to use</th></tr><tr><td><img src="{}" alt="homebutton"></td><td valign="middle">For all Images, reset to the original view.</td></tr><tr><td><img src="{}" alt="backwardforwardbutton"></td><td valign="middle">Go back to the last or forward to the next view.</td></tr><tr><td><img src="{}" alt="panzoombutton"></td><td valign="middle">Activate the pan/zoom tool. Pan with left mouse button, zoom with right</td></tr><tr><td><img src="{}" alt="backwardforwardbutton"></td><td valign="middle">Zoom with drawing a rectangle</td></tr></table><h2>Pick Mode</h2><p>Change into pick mode to pick up your control points. You have to pick the control points in both images before you can start to pick the next point.</p><p>Press the red button below to start pick mode.</p><h2>Control Point list</h2><p>Below in the table, all your control points are listed. You can delete one ore more selected control points with the <b>delete</b> button.</p><h2>Return</h2><p>If you are finished, please press the <b>return</b> button below. You will come back to wherever you have been.</p></body></html>'
         help_html = help_header + help_body.format(
@@ -117,16 +126,19 @@ class _MainWindow(QMainWindow):
             os.path.join(os.path.dirname(__file__), "img/panzoombutton.png"),
             os.path.join(os.path.dirname(__file__), "img/zoomboxbutton.png"),
         )
+
+        # cp table
         self.help.insertHtml(help_html)
-        self.cpTabelModel = QStandardItemModel(self)
+        self.cpTableModel = QStandardItemModel(self)
         self.cpTable = QTableView(self)
-        self.cpTable.setModel(self.cpTabelModel)
+        self.cpTable.setModel(self.cpTableModel)
         self.cpTable.setMaximumWidth(400)
 
+        # buttons
         self.delButton = QPushButton("Delete selected Control Point")
         self.delButton.setStyleSheet("font-size: 16px")
 
-        self.pickButton = QPushButton("pick mode")
+        self.pickButton = QPushButton("Pick Mode")
         self.pickButton.setFixedHeight(60)
         self.pickButton.setStyleSheet("color: red; font-size: 16px;")
 
@@ -154,7 +166,6 @@ class _MainWindow(QMainWindow):
         self.close()
 
     def pickmodechange(self):
-
         if self.wp.canvas.toolbar.mode in ["", None]:
             if self.wp.canvas.pickmode == True:
                 self.wp.canvas.pickMode_changed = True
@@ -176,7 +187,6 @@ class _MainWindow(QMainWindow):
             )
 
     def delCP(self):
-
         rows = self.cpTable.selectionModel().selectedRows()
         for row in rows:
             try:
@@ -193,7 +203,6 @@ class _MainWindow(QMainWindow):
         self.wp.canvas.cpChanged = True
 
     def updateGUI(self):
-
         if self.wp.canvas.toolbar.mode not in ["", None]:
             self.wp.canvas.pickmode = False
             self.wp.canvas.pickMode_changed = True
@@ -218,30 +227,52 @@ class _MainWindow(QMainWindow):
     def updateCPtable(self):
         self.wp.canvas.cpChanged = False
         self.cpTable.clearSelection()
-        self.cpTabelModel.clear()
-        self.cpTabelModel.setHorizontalHeaderLabels(
-            ["Point Number", "x (Img 1)", "y (Img 1)", "x (Img 2)", "y (Img 2)"]
+        self.cpTableModel.clear()
+        # self.cpTableModel.setHorizontalHeaderLabels(
+        #     ["Point Number", "x (Img 1)", "y (Img 1)", "x (Img 2)", "y (Img 2)"]
+        # )
+
+        self.cpTableModel.setHorizontalHeaderLabels(
+            ["Landmark", "x", "y"]
         )
 
+        # for cp in self.wp.canvas.CPlist:
+        #     idp, x1, y1, x2, y2 = cp.coordText
+
+        #     c1 = QStandardItem(idp)
+        #     c2 = QStandardItem(x1)
+        #     c3 = QStandardItem(y1)
+        #     c4 = QStandardItem(x2)
+        #     c5 = QStandardItem(y2)
+
+        #     row = [c1, c2, c3, c4, c5]
+
+        #     for c in row:
+        #         c.setTextAlignment(Qt.AlignCenter)
+        #         c.setFlags(Qt.ItemIsEditable)
+        #         c.setFlags(Qt.ItemIsSelectable)
+
+        #     self.cpTableModel.appendRow(row)
+
         for cp in self.wp.canvas.CPlist:
-            idp, x1, y1, x2, y2 = cp.coordText
+            idp, x, y = cp.coordText
 
             c1 = QStandardItem(idp)
-            c2 = QStandardItem(x1)
-            c3 = QStandardItem(y1)
-            c4 = QStandardItem(x2)
-            c5 = QStandardItem(y2)
+            c2 = QStandardItem(x)
+            c3 = QStandardItem(y)
 
-            row = [c1, c2, c3, c4, c5]
+            row = [c1, c2, c3]
 
             for c in row:
                 c.setTextAlignment(Qt.AlignCenter)
                 c.setFlags(Qt.ItemIsEditable)
                 c.setFlags(Qt.ItemIsSelectable)
 
-            self.cpTabelModel.appendRow(row)
+            self.cpTableModel.appendRow(row)
 
         self.cpTable.resizeColumnsToContents()
+        # doesn't work aha
+        # self.cpTable.resizeColumnToContents()
 
 
 class _WidgetPlot(QWidget):
@@ -261,7 +292,7 @@ class _PlotCanvas(FigureCanvas):
         self.setParent(parent)
         FigureCanvas.setSizePolicy(self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        self.plot()
+        self.plot() # plotting images
         self.createConn()
 
         self.figureActive = False
@@ -276,41 +307,42 @@ class _PlotCanvas(FigureCanvas):
         self.lastIDP = 0
 
     def plot(self):
-        gs0 = self.fig.add_gridspec(1, 2)
+        # gs0 = self.fig.add_gridspec(1, 2)
+        gs0 = self.fig.add_gridspec(1, 1)
 
         self.ax11 = self.fig.add_subplot(
             gs0[0], xticks=[], yticks=[], title="Image 1: Select Points"
         )
-        self.ax12 = self.fig.add_subplot(
-            gs0[1], xticks=[], yticks=[], title="Image 2: Select Points"
-        )
+        # self.ax12 = self.fig.add_subplot(
+        #     gs0[1], xticks=[], yticks=[], title="Image 2: Select Points"
+        # )
 
         self.ax11.imshow(img1)
-        self.ax12.imshow(img2)
+        # self.ax12.imshow(img2)
 
     def updateCanvas(self, event=None):
         ax11_xlim = self.ax11.get_xlim()
         ax11_xvis = ax11_xlim[1] - ax11_xlim[0]
-        ax12_xlim = self.ax12.get_xlim()
-        ax12_xvis = ax12_xlim[1] - ax12_xlim[0]
+        # ax12_xlim = self.ax12.get_xlim()
+        # ax12_xvis = ax12_xlim[1] - ax12_xlim[0]
 
         while len(self.ax11.patches) > 0:
             [p.remove() for p in self.ax11.patches]
-        while len(self.ax12.patches) > 0:
-            [p.remove() for p in self.ax12.patches]
+        # while len(self.ax12.patches) > 0:
+        #     [p.remove() for p in self.ax12.patches]
         while len(self.ax11.texts) > 0:
             [t.remove() for t in self.ax11.texts]
-        while len(self.ax12.texts) > 0:
-            [t.remove() for t in self.ax12.texts]
+        # while len(self.ax12.texts) > 0:
+        #     [t.remove() for t in self.ax12.texts]
 
-        ax11_units = ax11_xvis * 0.003
-        ax12_units = ax12_xvis * 0.003
+        ax11_units = ax11_xvis * 0.003 # what does this affect?
+        # ax12_units = ax12_xvis * 0.003
 
         for cp in self.CPlist:
             x1 = cp.img1x
             y1 = cp.img1y
-            x2 = cp.img2x
-            y2 = cp.img2y
+            # x2 = cp.img2x
+            # y2 = cp.img2y
             idp = str(cp.idp)
 
             if x1:
@@ -320,12 +352,12 @@ class _PlotCanvas(FigureCanvas):
                 self.ax11.add_patch(symb1)
                 self.ax11.add_patch(symb2)
 
-            if x2:
-                symb1 = plt.Circle((x2, y2), ax12_units * 8, fill=False, color="red")
-                symb2 = plt.Circle((x2, y2), ax12_units * 1, fill=True, color="red")
-                self.ax12.text(x2 + ax12_units * 5, y2 + ax12_units * 5, idp)
-                self.ax12.add_patch(symb1)
-                self.ax12.add_patch(symb2)
+            # if x2:
+            #     symb1 = plt.Circle((x2, y2), ax12_units * 8, fill=False, color="red")
+            #     symb2 = plt.Circle((x2, y2), ax12_units * 1, fill=True, color="red")
+            #     self.ax12.text(x2 + ax12_units * 5, y2 + ax12_units * 5, idp)
+            #     self.ax12.add_patch(symb1)
+            #     self.ax12.add_patch(symb2)
 
         self.fig.canvas.draw()
 
@@ -335,7 +367,7 @@ class _PlotCanvas(FigureCanvas):
         self.fig.canvas.mpl_connect("axes_enter_event", self.activeAxes)
         self.fig.canvas.mpl_connect("button_press_event", self.mouseClicked)
         self.ax11.callbacks.connect("xlim_changed", self.updateCanvas)
-        self.ax12.callbacks.connect("xlim_changed", self.updateCanvas)
+        # self.ax12.callbacks.connect("xlim_changed", self.updateCanvas)
 
     def activeFigure(self, event):
 
@@ -362,9 +394,10 @@ class _PlotCanvas(FigureCanvas):
             self.pickmode = False
 
         if self.pickmode and (
-            (event.inaxes == self.ax11) or (event.inaxes == self.ax12)
+            # (event.inaxes == self.ax11) or (event.inaxes == self.ax12)
+            (event.inaxes == self.ax11)
         ):
-
+            # keeping first if case to use status_complete attribute, shouldn't affect functionality
             if self.CPactive and not self.CPactive.status_complete:
                 self.CPactive.appendCoord(x, y)
                 self.cpChanged = True
@@ -382,8 +415,8 @@ class _ControlPoint:
     def __init__(self, idp, x, y, other):
         self.img1x = None
         self.img1y = None
-        self.img2x = None
-        self.img2y = None
+        # self.img2x = None
+        # self.img2y = None
         self.status_complete = False
         self.idp = idp
 
@@ -397,46 +430,55 @@ class _ControlPoint:
         if self.mn.axesActive == self.mn.ax11 and self.img1x is None:
             self.img1x = x
             self.img1y = y
-        elif self.mn.axesActive == self.mn.ax12 and self.img2x is None:
-            self.img2x = x
-            self.img2y = y
+        # elif self.mn.axesActive == self.mn.ax12 and self.img2x is None:
+        #     self.img2x = x
+        #     self.img2y = y
 
-        else:
-            raise Exception("Please, select control point in the other image.")
+        # else:
+        #     raise Exception("Please, select control point in the other image.")
 
-        if self.img1x and self.img2x:
-            self.status_complete = True
-            self.mn.cpActive = None
+        # if self.img1x and self.img2x:
+        #     self.status_complete = True
+        #     self.mn.cpActive = None
+        
+        self.status_complete = True
+        self.mn.cpActive = None
 
     @property
     def coord(self):
-        return self.idp, self.img1x, self.img1y, self.img2x, self.img2y
+        # return self.idp, self.img1x, self.img1y, self.img2x, self.img2y
+        return self.idp, self.img1x, self.img1y
 
     @property
     def coordText(self):
-        if self.img1x and not self.img2x:
-            return (
+        # if self.img1x and not self.img2x:
+        #     return (
+        #         str(round(self.idp, 2)),
+        #         str(round(self.img1x, 2)),
+        #         str(round(self.img1y, 2)),
+        #         "",
+        #         "",
+        #     )
+        # elif not self.img1x and self.img2x:
+        #     return (
+        #         str(round(self.idp, 2)),
+        #         "",
+        #         "",
+        #         str(round(self.img2x, 2)),
+        #         str(round(self.img2y, 2)),
+        #     )
+        # else:
+        #     return (
+        #         str(round(self.idp, 2)),
+        #         str(round(self.img1x, 2)),
+        #         str(round(self.img1y, 2)),
+        #         str(round(self.img2x, 2)),
+        #         str(round(self.img2y, 2)),
+        #     )
+        return (
                 str(round(self.idp, 2)),
                 str(round(self.img1x, 2)),
                 str(round(self.img1y, 2)),
-                "",
-                "",
-            )
-        elif not self.img1x and self.img2x:
-            return (
-                str(round(self.idp, 2)),
-                "",
-                "",
-                str(round(self.img2x, 2)),
-                str(round(self.img2y, 2)),
-            )
-        else:
-            return (
-                str(round(self.idp, 2)),
-                str(round(self.img1x, 2)),
-                str(round(self.img1y, 2)),
-                str(round(self.img2x, 2)),
-                str(round(self.img2y, 2)),
             )
 
     def __str__(self):
@@ -449,8 +491,8 @@ class _ControlPoint:
             "point_id": self.idp,
             "img1_x": self.img1x,
             "img1_y": self.img1y,
-            "img2_x": self.img2x,
-            "img2_y": self.img2y,
+            # "img2_x": self.img2x,
+            # "img2_y": self.img2y,
         }
 
         return dict

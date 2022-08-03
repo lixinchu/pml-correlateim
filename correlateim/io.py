@@ -1,5 +1,6 @@
 import os
 import time
+import json
 
 import numpy as np
 import skimage.color
@@ -127,3 +128,22 @@ def save_text(image_filename_1, image_filename_2, output_filename,
         f.write(str(matched_points_dict) + '\n')
 
     return output_text_filename
+
+def save_json(output_filename, matched_points_dict):
+    """ Saves selected landmark points into JSON file.
+
+    Parameters
+    ----------
+    output_filename : str
+        JSON filename for saving user selected control points. 
+    matched_points_dict : list of dict
+        User selected control points.
+    Returns
+    -------
+    str
+        Filename of output JSON file.
+    """
+    with open(output_filename + '.json', 'w') as outfile:
+        json.dump(matched_points_dict, outfile)
+
+    return
